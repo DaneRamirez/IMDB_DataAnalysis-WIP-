@@ -1,5 +1,19 @@
---Used for Postgresql Database.--
+
+--Stored Procedure Used for Postgresql Database.--
 --Only use this SQL script to create tables required--
+
+-- Table: title_basics (must be created first)
+CREATE TABLE title_basics (
+    tconst TEXT PRIMARY KEY,
+    titleType TEXT NOT NULL,
+    primaryTitle TEXT NOT NULL,
+    originalTitle TEXT NOT NULL,
+    isAdult BOOLEAN NOT NULL,
+    startYear INTEGER,
+    endYear INTEGER,
+    runtimeMinutes INTEGER,
+    genres TEXT[] -- Array of up to three genres
+);
 
 -- Table: title_akas
 CREATE TABLE title_akas (
@@ -13,19 +27,6 @@ CREATE TABLE title_akas (
     isOriginalTitle BOOLEAN NOT NULL,
     PRIMARY KEY (titleId, ordering),
     FOREIGN KEY (titleId) REFERENCES title_basics(tconst) ON DELETE CASCADE
-);
-
--- Table: title_basics
-CREATE TABLE title_basics (
-    tconst TEXT PRIMARY KEY,
-    titleType TEXT NOT NULL,
-    primaryTitle TEXT NOT NULL,
-    originalTitle TEXT NOT NULL,
-    isAdult BOOLEAN NOT NULL,
-    startYear INTEGER,
-    endYear INTEGER,
-    runtimeMinutes INTEGER,
-    genres TEXT[] -- Array of up to three genres
 );
 
 -- Table: title_crew
@@ -45,7 +46,25 @@ CREATE TABLE title_episode (
     FOREIGN KEY (parentTconst) REFERENCES title_basics(tconst) ON DELETE CASCADE
 );
 
--- Table: title_principals
+-- Table: title_ratings
+CREATE TABLE title_ratings (
+    tconst TEXT PRIMARY KEY,
+    averageRating DECIMAL(3,1) NOT NULL,
+    numVotes INTEGER NOT NULL,
+    FOREIGN KEY (tconst) REFERENCES title_basics(tconst) ON DELETE CASCADE
+);
+
+-- Table: name_basics (must be created before title_principals)
+CREATE TABLE name_basics (
+    nconst TEXT PRIMARY KEY,
+    primaryName TEXT NOT NULL,
+    birthYear INTEGER,
+    deathYear INTEGER,
+    primaryProfession TEXT[],  -- Array of professions
+    knownForTitles TEXT[] -- Array of tconsts
+);
+
+-- Table: title_principals (must be created last because it references both title_basics & name_basics)
 CREATE TABLE title_principals (
     tconst TEXT NOT NULL,
     ordering INTEGER NOT NULL,
@@ -56,22 +75,4 @@ CREATE TABLE title_principals (
     PRIMARY KEY (tconst, ordering, nconst),
     FOREIGN KEY (tconst) REFERENCES title_basics(tconst) ON DELETE CASCADE,
     FOREIGN KEY (nconst) REFERENCES name_basics(nconst) ON DELETE CASCADE
-);
-
--- Table: title_ratings
-CREATE TABLE title_ratings (
-    tconst TEXT PRIMARY KEY,
-    averageRating DECIMAL(3,1) NOT NULL,
-    numVotes INTEGER NOT NULL,
-    FOREIGN KEY (tconst) REFERENCES title_basics(tconst) ON DELETE CASCADE
-);
-
--- Table: name_basics
-CREATE TABLE name_basics (
-    nconst TEXT PRIMARY KEY,
-    primaryName TEXT NOT NULL,
-    birthYear INTEGER,
-    deathYear INTEGER,
-    primaryProfession TEXT[],  -- Array of professions
-    knownForTitles TEXT[] -- Array of tconsts
 );
