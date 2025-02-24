@@ -54,6 +54,11 @@ def preprocess_tsv_files():
         "title.ratings": ["numVotes"]
     }
 
+    # Load name.basics first to get valid nconst values
+    name_basics_path = os.path.join(EXTRACTED_DIR, "name.basics.tsv")
+    name_df = pd.read_csv(name_basics_path, sep="\t", dtype=str, na_values=r"\N", encoding="utf-8")
+    valid_nconsts = set(name_df["nconst"].dropna().unique())  # All valid nconsts
+
     tsv_files = [f for f in os.listdir(EXTRACTED_DIR) if f.endswith(".tsv")]
     
     for file in tsv_files:
@@ -92,19 +97,23 @@ def preprocess_tsv_files():
         # Handle specific tables
         if key == "title.basics":
             # Ensure required columns are populated
-            df["primaryTitle"] = df["primaryTitle"].fillna("Unknown Title")
-            df["originalTitle"] = df["originalTitle"].fillna(df["primaryTitle"])
+            df["primaryTitle"] = df["primaryTitle"].replace('', "Unknown Title").fillna("Unknown Title")
+            df["originalTitle"] = df["originalTitle"].replace('', "Unknown Title").fillna(df["primaryTitle"])
             # Convert boolean
             df["isAdult"] = df["isAdult"].map({"0": "f", "1": "t"}).fillna("f")
 
         if key == "name.basics":
-            df["primaryName"] = df["primaryName"].fillna("Unknown")
+            df["primaryName"] = df["primaryName"].replace('', "Unknown").fillna("Unknown")
             # Fix array columns if empty
             for col in ["primaryProfession", "knownForTitles"]:
                 df[col] = df[col].fillna("{}")
 
         if key == "title.akas":
-            df["title"] = df["title"].fillna("Unknown Title")
+            df["title"] = df["title"].replace('', "Unknown Title").fillna("Unknown Title")
+
+        if key == "title.principals":
+            # Filter out rows with invalid nconst values
+            df = df[df["nconst"].isin(valid_nconsts)]
 
         # Save cleaned file
         output_path = os.path.join(CLEANED_DIR, file)
@@ -130,46 +139,32 @@ def load_tsv_to_postgres():
 
     try:
         for key in LOAD_ORDER:
-            table = TABLE_MAPPING[key]
-            tsv_path = os.path.join(CLEANED_DIR, f"{key}.tsv")
-            
-            print(f"\n⏳ Loading {table}...")
-            
-            # Truncate table
-            cursor.execute(f"TRUNCATE TABLE {table} CASCADE;")
-            
-            # Load data
-            with open(tsv_path, "r", encoding="utf-8") as f:
-                cursor.copy_expert(
-                    f"COPY {table} FROM STDIN WITH (FORMAT CSV, DELIMITER E'\t', NULL '\\N', HEADER)",
-                    f
-                )
-            print(f"✅ Loaded {table}")
+            table_name = TABLE_MAPPING.get(key)
+            file_path = os.path.join(CLEANED_DIR, f"{key}.tsv")
 
-        # Validate foreign keys
-        print("\n🔍 Validating foreign keys...")
-        for table, fk_column in [
-            ("title_akas", "titleId"),
-            ("title_crew", "tconst"),
-            ("title_episode", "parentTconst"),
-            ("title_principals", "tconst"),
-            ("title_ratings", "tconst")
-        ]:
-            cursor.execute(f"""
-                DELETE FROM {table}
-                WHERE {fk_column} NOT IN (SELECT tconst FROM title_basics);
-            """)
-            print(f"  - Cleaned orphaned rows in {table}")
+            print(f"Loading {table_name}...")
 
-        conn.commit()
-        
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        conn.rollback()
+            # Start a transaction block
+            conn.autocommit = False  # Disable autocommit
+
+            try:
+                cursor.execute(f"TRUNCATE TABLE {table_name} CASCADE;")
+                with open(file_path, 'r', encoding="utf-8") as f:
+                    cursor.copy_expert(
+                        f"COPY {table_name} FROM STDIN WITH (FORMAT CSV, DELIMITER E'\t', NULL '\\N', HEADER)",
+                        f
+                    )
+                conn.commit()  # Commit only if both TRUNCATE and COPY succeed
+                print(f"✅ Loaded {table_name}")
+            except Exception as e:
+                conn.rollback()  # Rollback TRUNCATE if COPY fails
+                print(f"❌ Failed to load {table_name}: {e}")
+
     finally:
+        conn.autocommit = True  # Re-enable autocommit
         cursor.close()
         conn.close()
-        print("\n🎉 Database loading complete!")
+        print("🎉 Database loading complete!")
 
 # ------------------ Main Execution ------------------
 
