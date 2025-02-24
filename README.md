@@ -7,7 +7,7 @@ This project automates the extraction, transformation, and loading (ETL) of IMDb
 - 🗃 **PostgreSQL Database Storage**
 - 🚀 **Automated Processing with Python**
 - 📊 **Data Visualization in Tableau**
-
+- 🔢 **10M - 100M+ Rows**
 ---
 
 ## 📂 Dataset Information
@@ -63,16 +63,17 @@ psql -U your_username -d imdb_data -f create_tables.sql
 ```
 
 ### 6️⃣ Download and Extract IMDb Data
-```python
+```
 python download.py
+python extract.py
 
 ```
 
 ### 7️⃣ Load Data into PostgreSQL
-```python
-python extract.py
-```
 
+```
+python process_data.py
+```
 ### 🔄 Automating the Pipeline (CRON)
 Run a simple cron job
 ```bash
@@ -81,3 +82,10 @@ Run a simple cron job
 
 ### 🔄 Automating the Pipeline (Airflow)
 Coming soon
+
+## 📌 Plans:
+- Implement Overwriting
+- Implement apache airflow for scheduling
+- Implement Spark for distributed computing
+- Dockerization
+- Analysis

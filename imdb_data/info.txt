@@ -1,0 +1,1 @@
+prepare atleast 1-5GB for the .gz files
