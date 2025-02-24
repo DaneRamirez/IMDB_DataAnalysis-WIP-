@@ -1,2 +1,6 @@
 /.venv
 .env
+/cleaned
+/imdb_extracted
+/imdb_data
+settings.json

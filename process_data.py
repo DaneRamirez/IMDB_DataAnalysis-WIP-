@@ -54,10 +54,15 @@ def preprocess_tsv_files():
         "title.ratings": ["numVotes"]
     }
 
-    # Load name.basics first to get valid nconst values
+    # Load title.basics to get valid tconst values
+    title_basics_path = os.path.join(EXTRACTED_DIR, "title.basics.tsv")
+    title_df = pd.read_csv(title_basics_path, sep="\t", dtype=str, na_values=r"\N", encoding="utf-8")
+    valid_tconsts = set(title_df["tconst"].dropna().unique())
+
+    # Load name.basics to get valid nconst values
     name_basics_path = os.path.join(EXTRACTED_DIR, "name.basics.tsv")
     name_df = pd.read_csv(name_basics_path, sep="\t", dtype=str, na_values=r"\N", encoding="utf-8")
-    valid_nconsts = set(name_df["nconst"].dropna().unique())  # All valid nconsts
+    valid_nconsts = set(name_df["nconst"].dropna().unique())
 
     tsv_files = [f for f in os.listdir(EXTRACTED_DIR) if f.endswith(".tsv")]
     
@@ -110,10 +115,12 @@ def preprocess_tsv_files():
 
         if key == "title.akas":
             df["title"] = df["title"].replace('', "Unknown Title").fillna("Unknown Title")
+            # Filter invalid titleId (tconst)
+            df = df[df["titleId"].isin(valid_tconsts)]
 
         if key == "title.principals":
-            # Filter out rows with invalid nconst values
-            df = df[df["nconst"].isin(valid_nconsts)]
+            # Filter invalid tconst and nconst
+            df = df[df["tconst"].isin(valid_tconsts) & df["nconst"].isin(valid_nconsts)]
 
         # Save cleaned file
         output_path = os.path.join(CLEANED_DIR, file)
