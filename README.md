@@ -1,15 +1,15 @@
-# 🎬 IMDb Data Pipeline with PostgreSQL & Tableau 📊
+# 🎬 IMDb Data Pipeline with PostgreSQL & Tableau/PowerBI 📊
 
 ## 📌 Project Overview
-This project automates the extraction, transformation, and loading (ETL) of IMDb datasets into **PostgreSQL**, ensuring that **Tableau visualizations** are continuously updated.
+This project automates (soon) the extraction, transformation, and loading (ETL) of IMDb datasets into **PostgreSQL**, ensuring that **Tableau/PowerBI visualizations** are continuously updated.
 
 - 🔄 **Daily IMDb Dataset Updates**
 - 🗃 **PostgreSQL Database Storage**
 - 🚀 **Automated Processing with Python**
-- 📊 **Data Visualization in Tableau**
+- 📊 **Data Visualization in Tableau/PowerBI**
 - 🔢 **10M - 100M+ Rows**
 ---
-
+![Screenshot](IMDB.png) 
 ## 📂 Dataset Information
 The IMDb datasets are updated daily and available in TSV format:
 - 🎭 `title.basics.tsv.gz` - Movie & TV show metadata
@@ -23,14 +23,13 @@ The IMDb datasets are updated daily and available in TSV format:
 The official IMDb dataset source:  
 🔗 [IMDb Datasets](https://developer.imdb.com/non-commercial-datasets/)
 
----
 
 ## ⚙️ Installation & Setup
 
 ### 1️⃣ **Clone the Repository**
 ```bash
-git clone https://github.com/your-repo/imdb-pipeline.git
-cd imdb-pipeline
+git clone https://github.com/DaneRamirez/IMDB_DataAnalysis-WIP-.git
+cd repositoryname
 ```
 ### 2️⃣ Create a Virtual Environment
 ```bash
@@ -44,7 +43,7 @@ pip install -r requirements.txt
 ```
 ### 4️⃣ Set Up PostgreSQL Database
 ```sql
-CREATE DATABASE imdb_data;
+CREATE DATABASE imdb_data; --or whatever name you want--
 ```
 Create and Modify .env to include your PostgreSQL credentials:
 ```bash
@@ -56,9 +55,9 @@ DB_PASS=your_password
 ```
 
 ### 5️⃣ Create Tables
-Run the provided Stored Procedure to create tables (or make your own)
+Run the provided Stored Procedure (createstatements.sql) to create tables (or make your own)
 ```bash
-psql -U your_username -d imdb_data -f create_tables.sql
+psql -U your_username -d imdb_data -f createstatements.sql
 
 ```
 
@@ -74,11 +73,16 @@ python extract.py
 ```
 python process_data.py
 ```
+
+### 8️⃣ (Optional) Run Materialized Views
+Run the materialized views.sql as an example query.
+These are just optional and an example ofcourse. 
+You are free to make your own
+
 ### 🔄 Automating the Pipeline (CRON)
 Run a simple cron job
-```bash
-0 3 * * * /usr/bin/python3 /path/to/imdb-pipeline/main.py
-```
+that runs download.py, extract.py, and download.py
+
 
 ### 🔄 Automating the Pipeline (Airflow)
 Coming soon
@@ -86,6 +90,7 @@ Coming soon
 ## 📌 Plans:
 - Implement Overwriting
 - Implement apache airflow for scheduling
-- Implement Spark for distributed computing
 - Dockerization
 - Analysis
+
+##### This project is a comprehensive exploration of IMDb data, from raw datasets to actionable insights. Feel free to explore the code and contribute!
